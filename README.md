@@ -107,6 +107,7 @@ Enable case-insensitive substring completion and add these aliases/environment s
 zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=*' 'l:|=* r:|=*'
 
 alias nvm="fnm"
+alias ls="ls --color=auto"
 alias vi="nvim"
 alias vim="nvim"
 alias n="nvim"
@@ -226,6 +227,7 @@ Before declaring completion, verify all of the following:
 - The login shell and new Foot terminals use Zsh.
 - Antidote plugins load, including autosuggestions.
 - `j` invokes zoxide and `nvm` invokes fnm.
+- `ls` automatically uses color when writing to a terminal.
 - `vi`, `vim`, and `n` invoke Neovim.
 - `pwd | pbcopy` pastes without a trailing newline; `pbpaste` reads the Wayland clipboard.
 - Neovim starts without Blink fuzzy-library errors, highlights Git commit messages, and creates no `.bak` files.
@@ -236,4 +238,3 @@ Before declaring completion, verify all of the following:
 - `hyprctl configerrors` is empty.
 
 Finish with a concise report separating completed software configuration from any manual firmware step that remains.
-
