@@ -220,7 +220,51 @@ In the `[text-bindings]` section of `~/.config/foot/foot.ini`, bind `SUPER+R` to
 
 Before relying on the binding, confirm `SUPER+R` is not consumed by a Hyprland global binding. Validate the file with `foot --check-config`. Foot does not dynamically reload font and key configuration, so test in a newly opened terminal.
 
-### 7. Final verification
+### 7. Configure browser-aware `SUPER+W`
+
+Override Omarchy's default `SUPER+W` window-close binding in `~/.config/hypr/bindings.lua`:
+
+```lua
+local function active_window_is_browser()
+  local window = hl.get_active_window()
+  if not window then
+    return false
+  end
+
+  local class = (window.class or ""):lower()
+  return class:match("^brave")
+    or class:match("^firefox")
+    or class:match("^chromium")
+    or class:match("^google%-chrome")
+    or class:match("^microsoft%-edge")
+    or class:match("^vivaldi")
+    or class:match("^opera")
+    or class:match("^librewolf")
+    or class:match("^zen")
+    or class:match("^helium")
+end
+
+local function close_browser_tab_or_window()
+  if not active_window_is_browser() then
+    hl.dispatch(hl.dsp.window.close())
+    return
+  end
+
+  hl.dispatch(hl.dsp.send_key_state({ mods = "CTRL", key = "W", state = "down" }))
+  hl.timer(function()
+    hl.dispatch(hl.dsp.send_key_state({ mods = "CTRL", key = "W", state = "up" }))
+  end, { timeout = 50, type = "oneshot" })
+end
+
+hl.unbind("SUPER + W")
+o.bind("SUPER + W", "Close browser tab / window", close_browser_tab_or_window)
+```
+
+In a browser, `SUPER+W` sends `Ctrl+W`, so it closes the active tab. When the browser has no tab left, `Ctrl+W` closes the browser window. In other applications, `SUPER+W` keeps its window-close behavior.
+
+After changing the file, run `hyprctl reload` and `hyprctl configerrors`. The error list must be empty.
+
+### 8. Final verification
 
 Before declaring completion, verify all of the following:
 
@@ -235,6 +279,7 @@ Before declaring completion, verify all of the following:
 - SSH password authentication works only through the intended Tailscale path, root SSH login is disabled, and both services start at boot.
 - Operator Mono Lig Book is the default monospace face at 10 pt, with correct accent fallback.
 - `SUPER+R` acts like `Ctrl+L` in a newly opened Foot terminal.
+- `SUPER+W` closes one browser tab at a time and closes the browser window after the last tab. In other applications, it closes the active window.
 - `hyprctl configerrors` is empty.
 
 Finish with a concise report separating completed software configuration from any manual firmware step that remains.
