@@ -220,9 +220,9 @@ In the `[text-bindings]` section of `~/.config/foot/foot.ini`, bind `SUPER+R` to
 
 Before relying on the binding, confirm `SUPER+R` is not consumed by a Hyprland global binding. Validate the file with `foot --check-config`. Foot does not dynamically reload font and key configuration, so test in a newly opened terminal.
 
-### 7. Configure browser-aware `SUPER+W`
+### 7. Configure browser tab shortcuts
 
-Override Omarchy's default `SUPER+W` window-close binding in `~/.config/hypr/bindings.lua`:
+Override Omarchy's default `SUPER+W` and `SUPER+T` bindings in `~/.config/hypr/bindings.lua`:
 
 ```lua
 local function active_window_is_browser()
@@ -244,23 +244,38 @@ local function active_window_is_browser()
     or class:match("^helium")
 end
 
+local function send_shortcut_once(mods, key)
+  hl.dispatch(hl.dsp.send_key_state({ mods = mods, key = key, state = "down" }))
+  hl.timer(function()
+    hl.dispatch(hl.dsp.send_key_state({ mods = mods, key = key, state = "up" }))
+  end, { timeout = 50, type = "oneshot" })
+end
+
 local function close_browser_tab_or_window()
   if not active_window_is_browser() then
     hl.dispatch(hl.dsp.window.close())
     return
   end
 
-  hl.dispatch(hl.dsp.send_key_state({ mods = "CTRL", key = "W", state = "down" }))
-  hl.timer(function()
-    hl.dispatch(hl.dsp.send_key_state({ mods = "CTRL", key = "W", state = "up" }))
-  end, { timeout = 50, type = "oneshot" })
+  send_shortcut_once("CTRL", "W")
+end
+
+local function open_browser_tab()
+  if active_window_is_browser() then
+    send_shortcut_once("CTRL", "T")
+  end
 end
 
 hl.unbind("SUPER + W")
 o.bind("SUPER + W", "Close browser tab / window", close_browser_tab_or_window)
+
+hl.unbind("SUPER + T")
+o.bind("SUPER + T", "New browser tab", open_browser_tab)
 ```
 
 In a browser, `SUPER+W` sends `Ctrl+W`, so it closes the active tab. When the browser has no tab left, `Ctrl+W` closes the browser window. In other applications, `SUPER+W` keeps its window-close behavior.
+
+In a browser, `SUPER+T` sends `Ctrl+T` to open a new tab. Outside browsers, `SUPER+T` does nothing and cannot change the tile layout.
 
 After changing the file, run `hyprctl reload` and `hyprctl configerrors`. The error list must be empty.
 
@@ -280,6 +295,7 @@ Before declaring completion, verify all of the following:
 - Operator Mono Lig Book is the default monospace face at 10 pt, with correct accent fallback.
 - `SUPER+R` acts like `Ctrl+L` in a newly opened Foot terminal.
 - `SUPER+W` closes one browser tab at a time and closes the browser window after the last tab. In other applications, it closes the active window.
+- `SUPER+T` opens a new browser tab and does nothing in other applications.
 - `hyprctl configerrors` is empty.
 
 Finish with a concise report separating completed software configuration from any manual firmware step that remains.
