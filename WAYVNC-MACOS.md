@@ -161,16 +161,16 @@ hl.bind = function(keys, dispatcher, options)
     and (keys:find("SUPER", 1, true) or keys:find("ALT", 1, true))
 
   -- Preserve explicitly device-scoped bindings exactly as authored.
-  if not has_swapped_modifier or (options and options.devices) then
+  if not has_swapped_modifier or (options and options.device) then
     return original_bind(keys, dispatcher, options)
   end
 
   local non_vnc_options = copy_options(options)
-  non_vnc_options.devices = { inclusive = false, list = { wayvnc_keyboard } }
+  non_vnc_options.device = { inclusive = false, list = { wayvnc_keyboard } }
   original_bind(keys, dispatcher, non_vnc_options)
 
   local vnc_options = copy_options(options)
-  vnc_options.devices = { inclusive = true, list = { wayvnc_keyboard } }
+  vnc_options.device = { inclusive = true, list = { wayvnc_keyboard } }
   return original_bind(swap_super_alt(keys), dispatcher, vnc_options)
 end
 
@@ -182,6 +182,11 @@ hl.unbind = function(keys)
   end
 end
 ```
+
+Use `device` in these options. The name is singular. If you use `devices`,
+Hyprland does not apply the per-device scope, so both copies of a shortcut can
+run on the same keyboard. For example, the private-browser shortcut can open
+two windows.
 
 The placement is important: Omarchy's default bindings are registered by
 `require("default.hypr.omarchy")`, so the translation must be installed first.
