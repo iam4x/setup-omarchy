@@ -222,7 +222,7 @@ Before relying on the binding, confirm `SUPER+R` is not consumed by a Hyprland g
 
 ### 7. Configure browser tab shortcuts
 
-Override Omarchy's default `SUPER+W` and `SUPER+T` bindings in `~/.config/hypr/bindings.lua`:
+Override Omarchy's default `SUPER+W` and `SUPER+T` bindings, then add browser navigation bindings in `~/.config/hypr/bindings.lua`:
 
 ```lua
 local function active_window_is_browser()
@@ -266,16 +266,33 @@ local function open_browser_tab()
   end
 end
 
+local function previous_browser_page()
+  if active_window_is_browser() then
+    send_shortcut_once("ALT", "LEFT")
+  end
+end
+
+local function next_browser_page()
+  if active_window_is_browser() then
+    send_shortcut_once("ALT", "RIGHT")
+  end
+end
+
 hl.unbind("SUPER + W")
 o.bind("SUPER + W", "Close browser tab / window", close_browser_tab_or_window)
 
 hl.unbind("SUPER + T")
 o.bind("SUPER + T", "New browser tab", open_browser_tab)
+
+o.bind("SUPER + bracketleft", "Previous browser page", previous_browser_page)
+o.bind("SUPER + bracketright", "Next browser page", next_browser_page)
 ```
 
 In a browser, `SUPER+W` sends `Ctrl+W`, so it closes the active tab. When the browser has no tab left, `Ctrl+W` closes the browser window. In other applications, `SUPER+W` keeps its window-close behavior.
 
 In a browser, `SUPER+T` sends `Ctrl+T` to open a new tab. Outside browsers, `SUPER+T` does nothing and cannot change the tile layout.
+
+In a browser, `SUPER+[` sends `Alt+Left` to go to the previous page. `SUPER+]` sends `Alt+Right` to go to the next page. Outside browsers, both shortcuts do nothing.
 
 After changing the file, run `hyprctl reload` and `hyprctl configerrors`. The error list must be empty.
 
@@ -296,6 +313,7 @@ Before declaring completion, verify all of the following:
 - `SUPER+R` acts like `Ctrl+L` in a newly opened Foot terminal.
 - `SUPER+W` closes one browser tab at a time and closes the browser window after the last tab. In other applications, it closes the active window.
 - `SUPER+T` opens a new browser tab and does nothing in other applications.
+- `SUPER+[` goes to the previous browser page, and `SUPER+]` goes to the next browser page. Both do nothing in other applications.
 - `hyprctl configerrors` is empty.
 
 Finish with a concise report separating completed software configuration from any manual firmware step that remains.
