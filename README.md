@@ -296,7 +296,26 @@ In a browser, `SUPER+[` sends `Alt+Left` to go to the previous page. `SUPER+]` s
 
 After changing the file, run `hyprctl reload` and `hyprctl configerrors`. The error list must be empty.
 
-### 8. Final verification
+### 8. Keep the pointer in place when new windows open
+
+Add this user override to `~/.config/hypr/looknfeel.lua`:
+
+```lua
+hl.config({
+  cursor = {
+    no_warps = true,
+  },
+})
+```
+
+This keeps the pointer in place when Hyprland focuses a newly opened window,
+such as a browser window opened from a link. The new window still receives
+focus.
+
+After changing the file, run `luac -p ~/.config/hypr/looknfeel.lua`, then run
+`hyprctl reload` and `hyprctl configerrors`. The error list must be empty.
+
+### 9. Final verification
 
 Before declaring completion, verify all of the following:
 
@@ -314,6 +333,7 @@ Before declaring completion, verify all of the following:
 - `SUPER+W` closes one browser tab at a time and closes the browser window after the last tab. In other applications, it closes the active window.
 - `SUPER+T` opens a new browser tab and does nothing in other applications.
 - `SUPER+[` goes to the previous browser page, and `SUPER+]` goes to the next browser page. Both do nothing in other applications.
+- Opening a link in a new browser window leaves the pointer at its previous position.
 - `hyprctl configerrors` is empty.
 
 Finish with a concise report separating completed software configuration from any manual firmware step that remains.
