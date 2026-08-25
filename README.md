@@ -200,13 +200,13 @@ https://github.com/willfore/vscode_operator_mono_lig/tree/master/fonts
 
 Install them under `~/.local/share/fonts/OperatorMonoLig` and rebuild the font cache. Use the Book face as the normal monospaced font and configure `Operator Mono Lig` as the Omarchy monospace family, including `monospace` and `ui-monospace` fontconfig aliases.
 
-Set terminal font size to 10 pt in Foot and any installed Omarchy terminal configurations. For Foot, use this ordered font list:
+Set the Foot terminal font size to 11 pt and use the `Operator Mono Lig` family:
 
 ```ini
-font=Operator Mono Lig:size=10,JetBrainsMono Nerd Font:size=10
+font=Operator Mono Lig:size=11
 ```
 
-Operator Mono Lig lacks some combining accent glyphs, so JetBrains Mono Nerd Font must be the explicit monospaced fallback. Verify precomposed and decomposed French accents such as `é è à ç ô ê ë` in a newly opened Foot terminal.
+Verify precomposed and decomposed French accents such as `é è à ç ô ê ë` in a newly opened Foot terminal.
 
 Keep normal Linux font rendering. Do not reintroduce the reverted macOS-style fontconfig rendering override.
 
@@ -672,7 +672,7 @@ Before declaring completion, verify all of the following:
 - Neovim starts without Blink fuzzy-library errors, highlights Git commit messages, and creates no `.bak` files.
 - `stylua`, `taplo`, `lazygit`, `tig`, `cloudflared`, `fnm`, and `zoxide` are installed.
 - SSH password authentication works only through the intended Tailscale path, root SSH login is disabled, and both services start at boot.
-- Operator Mono Lig Book is the default monospace face at 10 pt, with correct accent fallback.
+- Operator Mono Lig is the Foot font at 11 pt, with correct accent rendering.
 - `SUPER+R` acts like `Ctrl+L` in a newly opened Foot terminal.
 - `Delete` removes the character after the cursor in a new Foot terminal instead of inserting `~`.
 - In a browser, `SUPER+R` reloads the current page and `SUPER+SHIFT+R` performs a hard reload.
