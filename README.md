@@ -218,11 +218,11 @@ In the `[text-bindings]` section of `~/.config/foot/foot.ini`, bind `SUPER+R` to
 \x0c=Mod4+r
 ```
 
-Before relying on the binding, confirm `SUPER+R` is not consumed by a Hyprland global binding. Validate the file with `foot --check-config`. Foot does not dynamically reload font and key configuration, so test in a newly opened terminal.
+Keep the browser reload binding non-consuming so Foot can still receive `SUPER+R` outside browser windows. Validate the file with `foot --check-config`. Foot does not dynamically reload font and key configuration, so test in a newly opened terminal.
 
-### 7. Configure browser tab shortcuts
+### 7. Configure browser shortcuts
 
-Override Omarchy's default `SUPER+W` and `SUPER+T` bindings, then add browser navigation bindings in `~/.config/hypr/bindings.lua`:
+Override Omarchy's default `SUPER+W` and `SUPER+T` bindings, then add browser shortcuts in `~/.config/hypr/bindings.lua`:
 
 ```lua
 local function active_window_is_browser()
@@ -278,6 +278,18 @@ local function next_browser_page()
   end
 end
 
+local function reload_browser_page()
+  if active_window_is_browser() then
+    send_shortcut_once("CTRL", "R")
+  end
+end
+
+local function hard_reload_browser_page()
+  if active_window_is_browser() then
+    send_shortcut_once("CTRL + SHIFT", "R")
+  end
+end
+
 hl.unbind("SUPER + W")
 o.bind("SUPER + W", "Close browser tab / window", close_browser_tab_or_window)
 
@@ -286,6 +298,11 @@ o.bind("SUPER + T", "New browser tab", open_browser_tab)
 
 o.bind("SUPER + bracketleft", "Previous browser page", previous_browser_page)
 o.bind("SUPER + bracketright", "Next browser page", next_browser_page)
+
+hl.unbind("SUPER + R")
+hl.unbind("SUPER + SHIFT + R")
+o.bind("SUPER + R", "Reload browser page", reload_browser_page, { non_consuming = true })
+o.bind("SUPER + SHIFT + R", "Hard reload browser page", hard_reload_browser_page, { non_consuming = true })
 ```
 
 In a browser, `SUPER+W` sends `Ctrl+W`, so it closes the active tab. When the browser has no tab left, `Ctrl+W` closes the browser window. In other applications, `SUPER+W` keeps its window-close behavior.
@@ -293,6 +310,8 @@ In a browser, `SUPER+W` sends `Ctrl+W`, so it closes the active tab. When the br
 In a browser, `SUPER+T` sends `Ctrl+T` to open a new tab. Outside browsers, `SUPER+T` does nothing and cannot change the tile layout.
 
 In a browser, `SUPER+[` sends `Alt+Left` to go to the previous page. `SUPER+]` sends `Alt+Right` to go to the next page. Outside browsers, both shortcuts do nothing.
+
+In a browser, `SUPER+R` sends `Ctrl+R` to reload the current page. `SUPER+SHIFT+R` sends `Ctrl+Shift+R` to perform a hard reload. Outside browsers, `SUPER+R` remains available to Foot for its `Ctrl+L` binding.
 
 After changing the file, run `hyprctl reload` and `hyprctl configerrors`. The error list must be empty.
 
@@ -330,6 +349,7 @@ Before declaring completion, verify all of the following:
 - SSH password authentication works only through the intended Tailscale path, root SSH login is disabled, and both services start at boot.
 - Operator Mono Lig Book is the default monospace face at 10 pt, with correct accent fallback.
 - `SUPER+R` acts like `Ctrl+L` in a newly opened Foot terminal.
+- In a browser, `SUPER+R` reloads the current page and `SUPER+SHIFT+R` performs a hard reload.
 - `SUPER+W` closes one browser tab at a time and closes the browser window after the last tab. In other applications, it closes the active window.
 - `SUPER+T` opens a new browser tab and does nothing in other applications.
 - `SUPER+[` goes to the previous browser page, and `SUPER+]` goes to the next browser page. Both do nothing in other applications.
