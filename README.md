@@ -192,18 +192,18 @@ Verify:
 
 ### 5. Fonts
 
-Obtain the four OTF fonts from:
+Obtain every OTF variant from:
 
 ```text
-https://github.com/willfore/vscode_operator_mono_lig/tree/master/fonts
+https://github.com/kingRayhan/operator-mono-lig
 ```
 
-Install them under `~/.local/share/fonts/OperatorMonoLig` and rebuild the font cache. Use the Book face as the normal monospaced font and configure `Operator Mono Lig` as the Omarchy monospace family, including `monospace` and `ui-monospace` fontconfig aliases.
+Install all 12 OTF files under `~/.local/share/fonts/OperatorMono` and rebuild the font cache. Use the upstream `Operator Mono` Book face as the normal monospaced font and configure it for both `monospace` and `ui-monospace` requests. The repository's two `OperatorMonoLig` files are retained alongside the Book, Medium, Bold, Light, and XLight variants.
 
-Set the Foot terminal font size to 11 pt and use the `Operator Mono Lig` family:
+Set the Foot terminal font size to 11 pt and use the Book face:
 
 ```ini
-font=Operator Mono Lig:size=11
+font=Operator Mono:style=Book:size=11
 ```
 
 Verify precomposed and decomposed French accents such as `é è à ç ô ê ë` in a newly opened Foot terminal.
@@ -698,7 +698,7 @@ Before declaring completion, verify all of the following:
 - Neovim starts without Blink fuzzy-library errors, highlights Git commit messages, and creates no `.bak` files.
 - `stylua`, `taplo`, `lazygit`, `tig`, `cloudflared`, `fnm`, and `zoxide` are installed.
 - SSH password authentication works only through the intended Tailscale path, root SSH login is disabled, and both services start at boot.
-- Operator Mono Lig is the Foot font at 11 pt, with correct accent rendering.
+- Operator Mono Book is the Foot font at 11 pt, with all upstream variants installed and correct accent rendering.
 - `SUPER+R` acts like `Ctrl+L` in a newly opened Foot terminal.
 - `Delete` removes the character after the cursor in a new Foot terminal instead of inserting `~`.
 - In a browser, `SUPER+R` reloads the current page and `SUPER+SHIFT+R` performs a hard reload.
