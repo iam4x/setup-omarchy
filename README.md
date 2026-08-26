@@ -210,7 +210,33 @@ Verify precomposed and decomposed French accents such as `é è à ç ô ê ë` 
 
 Keep normal Linux font rendering. Do not reintroduce the reverted macOS-style fontconfig rendering override.
 
-### 6. Configure terminal shortcuts
+### 6. Configure Caps Lock
+
+Omarchy's default Hyprland input configuration maps Caps Lock to the Compose key with `compose:caps`. That makes Caps Lock enter accent mode instead of toggling capitalization.
+
+Override `kb_options` in `~/.config/hypr/input.lua` and omit `compose:caps`:
+
+```lua
+hl.config({
+  input = {
+    kb_options = "shift:both_capslock_cancel,altwin:swap_alt_win",
+  },
+})
+```
+
+Keep any other keyboard options that the target machine needs, but do not add `compose:caps`.
+
+Validate and apply the change:
+
+```bash
+luac -p ~/.config/hypr/input.lua
+hyprctl reload
+hyprctl configerrors
+```
+
+The error list must be empty. Caps Lock must toggle capitalization instead of entering Compose or accent mode.
+
+### 7. Configure terminal shortcuts
 
 In the `[text-bindings]` section of `~/.config/foot/foot.ini`, bind `SUPER+R` to emit `Ctrl+L`:
 
@@ -235,7 +261,7 @@ zsh -lic 'bindkey -M viins "^[[3~"'
 
 The command must report `delete-char`.
 
-### 7. Configure browser shortcuts
+### 8. Configure browser shortcuts
 
 Override Omarchy's default `SUPER+W` and `SUPER+T` bindings, then add browser shortcuts in `~/.config/hypr/bindings.lua`:
 
@@ -330,7 +356,7 @@ In a browser, `SUPER+R` sends `Ctrl+R` to reload the current page. `SUPER+SHIFT+
 
 After changing the file, run `hyprctl reload` and `hyprctl configerrors`. The error list must be empty.
 
-### 8. Route application links to the active workspace
+### 9. Route application links to the active workspace
 
 Brave's native-Wayland external-link path can reuse a browser window on another
 workspace without activating the workspace. Omarchy's XDG browser selection is
@@ -640,7 +666,7 @@ is open on another workspace: clicking an off-site link must create the new
 Brave client on the webapp's workspace and leave that workspace active. Normal
 browser tabs are not affected.
 
-### 9. Keep the pointer in place when new windows open
+### 10. Keep the pointer in place when new windows open
 
 Add this user override to `~/.config/hypr/looknfeel.lua`:
 
@@ -659,7 +685,7 @@ focus.
 After changing the file, run `luac -p ~/.config/hypr/looknfeel.lua`, then run
 `hyprctl reload` and `hyprctl configerrors`. The error list must be empty.
 
-### 10. Final verification
+### 11. Final verification
 
 Before declaring completion, verify all of the following:
 
@@ -685,5 +711,6 @@ Before declaring completion, verify all of the following:
   of jumping to a Brave window on another workspace.
 - Opening a link in a new browser window leaves the pointer at its previous position.
 - `hyprctl configerrors` is empty.
+- Caps Lock toggles capitalization instead of entering Compose or accent mode.
 
 Finish with a concise report separating completed software configuration from any manual firmware step that remains.
