@@ -46,8 +46,6 @@ lazygit
 tig
 cloudflared
 wl-clipboard
-noto-fonts
-ttf-jetbrains-mono-nerd-basic
 ```
 
 Notes:
@@ -190,27 +188,7 @@ Verify:
 - `sshd -T` reports password authentication enabled, root login disabled, and the expected allowed user.
 - An SSH login through the Tailscale address works with the username and password.
 
-### 5. Fonts
-
-Obtain every OTF variant from:
-
-```text
-https://github.com/kingRayhan/operator-mono-lig
-```
-
-Install all 12 OTF files under `~/.local/share/fonts/OperatorMono` and rebuild the font cache. Use the upstream `Operator Mono` Book face as the normal monospaced font and configure it for both `monospace` and `ui-monospace` requests. The repository's two `OperatorMonoLig` files are retained alongside the Book, Medium, Bold, Light, and XLight variants.
-
-Set the Foot terminal font size to 11 pt and use the Book face:
-
-```ini
-font=Operator Mono:style=Book:size=11
-```
-
-Verify precomposed and decomposed French accents such as `é è à ç ô ê ë` in a newly opened Foot terminal.
-
-Keep normal Linux font rendering. Do not reintroduce the reverted macOS-style fontconfig rendering override.
-
-### 6. Configure Caps Lock
+### 5. Configure Caps Lock
 
 Omarchy's default Hyprland input configuration maps Caps Lock to the Compose key with `compose:caps`. That makes Caps Lock enter accent mode instead of toggling capitalization.
 
@@ -236,7 +214,7 @@ hyprctl configerrors
 
 The error list must be empty. Caps Lock must toggle capitalization instead of entering Compose or accent mode.
 
-### 7. Configure terminal shortcuts
+### 6. Configure terminal shortcuts
 
 In the `[text-bindings]` section of `~/.config/foot/foot.ini`, bind `SUPER+R` to emit `Ctrl+L`:
 
@@ -261,7 +239,7 @@ zsh -lic 'bindkey -M viins "^[[3~"'
 
 The command must report `delete-char`.
 
-### 8. Configure browser shortcuts
+### 7. Configure browser shortcuts
 
 Override Omarchy's default `SUPER+W` and `SUPER+T` bindings, then add browser shortcuts in `~/.config/hypr/bindings.lua`:
 
@@ -356,7 +334,7 @@ In a browser, `SUPER+R` sends `Ctrl+R` to reload the current page. `SUPER+SHIFT+
 
 After changing the file, run `hyprctl reload` and `hyprctl configerrors`. The error list must be empty.
 
-### 9. Route application links to the active workspace
+### 8. Route application links to the active workspace
 
 Brave's native-Wayland external-link path can reuse a browser window on another
 workspace without activating the workspace. Omarchy's XDG browser selection is
@@ -666,7 +644,7 @@ is open on another workspace: clicking an off-site link must create the new
 Brave client on the webapp's workspace and leave that workspace active. Normal
 browser tabs are not affected.
 
-### 10. Keep the pointer in place when new windows open
+### 9. Keep the pointer in place when new windows open
 
 Add this user override to `~/.config/hypr/looknfeel.lua`:
 
@@ -685,7 +663,7 @@ focus.
 After changing the file, run `luac -p ~/.config/hypr/looknfeel.lua`, then run
 `hyprctl reload` and `hyprctl configerrors`. The error list must be empty.
 
-### 11. Final verification
+### 10. Final verification
 
 Before declaring completion, verify all of the following:
 
@@ -698,7 +676,6 @@ Before declaring completion, verify all of the following:
 - Neovim starts without Blink fuzzy-library errors, highlights Git commit messages, and creates no `.bak` files.
 - `stylua`, `taplo`, `lazygit`, `tig`, `cloudflared`, `fnm`, and `zoxide` are installed.
 - SSH password authentication works only through the intended Tailscale path, root SSH login is disabled, and both services start at boot.
-- Operator Mono Book is the Foot font at 11 pt, with all upstream variants installed and correct accent rendering.
 - `SUPER+R` acts like `Ctrl+L` in a newly opened Foot terminal.
 - `Delete` removes the character after the cursor in a new Foot terminal instead of inserting `~`.
 - In a browser, `SUPER+R` reloads the current page and `SUPER+SHIFT+R` performs a hard reload.
