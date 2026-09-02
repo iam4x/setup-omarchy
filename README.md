@@ -239,7 +239,7 @@ zsh -lic 'bindkey -M viins "^[[3~"'
 
 The command must report `delete-char`.
 
-### 7. Configure browser shortcuts
+### 7. Configure browser and scratchpad shortcuts
 
 Override Omarchy's default `SUPER+W` and `SUPER+T` bindings, then add browser shortcuts in `~/.config/hypr/bindings.lua`:
 
@@ -315,6 +315,9 @@ o.bind("SUPER + W", "Close browser tab / window", close_browser_tab_or_window)
 hl.unbind("SUPER + T")
 o.bind("SUPER + T", "New browser tab", open_browser_tab)
 
+-- Remove Omarchy's preinstalled Google Maps shortcut.
+hl.unbind("SUPER + SHIFT + S")
+
 o.bind("SUPER + bracketleft", "Previous browser page", previous_browser_page)
 o.bind("SUPER + bracketright", "Next browser page", next_browser_page)
 
@@ -322,6 +325,10 @@ hl.unbind("SUPER + R")
 hl.unbind("SUPER + SHIFT + R")
 o.bind("SUPER + R", "Reload browser page", reload_browser_page, { non_consuming = true })
 o.bind("SUPER + SHIFT + R", "Hard reload browser page", hard_reload_browser_page, { non_consuming = true })
+
+-- SUPER+~ uses the direct GRAVE key on the configured US keyboard layout.
+o.bind("SUPER + GRAVE", "Toggle scratchpad", hl.dsp.workspace.toggle_special("scratchpad"))
+o.bind("SUPER + SHIFT + GRAVE", "Move window to scratchpad", hl.dsp.window.move({ workspace = "special:scratchpad", follow = false }))
 ```
 
 In a browser, `SUPER+W` sends `Ctrl+W`, so it closes the active tab. When the browser has no tab left, `Ctrl+W` closes the browser window. In other applications, `SUPER+W` keeps its window-close behavior.
@@ -331,6 +338,23 @@ In a browser, `SUPER+T` sends `Ctrl+T` to open a new tab. Outside browsers, `SUP
 In a browser, `SUPER+[` sends `Alt+Left` to go to the previous page. `SUPER+]` sends `Alt+Right` to go to the next page. Outside browsers, both shortcuts do nothing.
 
 In a browser, `SUPER+R` sends `Ctrl+R` to reload the current page. `SUPER+SHIFT+R` sends `Ctrl+Shift+R` to perform a hard reload. Outside browsers, `SUPER+R` remains available to Foot for its `Ctrl+L` binding.
+
+`SUPER+GRAVE` toggles the scratchpad. On a US keyboard, `GRAVE` is the key
+labeled `~`; press it without `SHIFT`. `SUPER+SHIFT+GRAVE` moves the focused
+window to the scratchpad. Keep Omarchy's existing `SUPER+S` scratchpad toggle.
+`SUPER+SHIFT+S` must remain unbound and must not open Google Maps.
+
+Fcitx5 Quick Phrase also uses `Super+grave` by default. To leave that key for
+Hyprland, back up `~/.config/fcitx5/conf/quickphrase.conf` if it exists, then
+create it with this content:
+
+```ini
+[TriggerKey]
+0=Super+semicolon
+```
+
+This removes `Super+grave` from Quick Phrase and keeps `Super+semicolon` as its
+remaining trigger. Restart Fcitx5 after changing the file.
 
 After changing the file, run `hyprctl reload` and `hyprctl configerrors`. The error list must be empty.
 
@@ -682,6 +706,9 @@ Before declaring completion, verify all of the following:
 - `SUPER+W` closes one browser tab at a time and closes the browser window after the last tab. In other applications, it closes the active window.
 - `SUPER+T` opens a new browser tab and does nothing in other applications.
 - `SUPER+[` goes to the previous browser page, and `SUPER+]` goes to the next browser page. Both do nothing in other applications.
+- `SUPER+GRAVE` toggles the scratchpad, and `SUPER+SHIFT+GRAVE` moves the focused window to it.
+- `SUPER+SHIFT+S` is unbound and does not open Google Maps.
+- Fcitx5 Quick Phrase does not use `Super+grave`; `Super+semicolon` remains its trigger.
 - Application HTTP and HTTPS links open in a regular Brave window on the active workspace, or create one there when none exists.
 - Off-site links clicked in any standalone webapp, including mouse-wheel
   middle-clicks and `CTRL`+clicks, use the same active-workspace routing instead
