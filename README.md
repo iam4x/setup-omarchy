@@ -318,6 +318,10 @@ o.bind("SUPER + T", "New browser tab", open_browser_tab)
 -- Remove Omarchy's preinstalled Google Maps shortcut.
 hl.unbind("SUPER + SHIFT + S")
 
+-- Remove Omarchy's preinstalled Google Photos and Spotify shortcuts.
+hl.unbind("SUPER + SHIFT + P")
+hl.unbind("SUPER + SHIFT + M")
+
 o.bind("SUPER + bracketleft", "Previous browser page", previous_browser_page)
 o.bind("SUPER + bracketright", "Next browser page", next_browser_page)
 
@@ -343,6 +347,8 @@ In a browser, `SUPER+R` sends `Ctrl+R` to reload the current page. `SUPER+SHIFT+
 labeled `~`; press it without `SHIFT`. `SUPER+SHIFT+GRAVE` moves the focused
 window to the scratchpad. Keep Omarchy's existing `SUPER+S` scratchpad toggle.
 `SUPER+SHIFT+S` must remain unbound and must not open Google Maps.
+`SUPER+SHIFT+P` and `SUPER+SHIFT+M` must remain unbound and must not open
+Google Photos or Spotify.
 
 Fcitx5 Quick Phrase also uses `Super+grave` by default. To leave that key for
 Hyprland, back up `~/.config/fcitx5/conf/quickphrase.conf` if it exists, then
@@ -719,6 +725,8 @@ Before declaring completion, verify all of the following:
 - `SUPER+[` goes to the previous browser page, and `SUPER+]` goes to the next browser page. Both do nothing in other applications.
 - `SUPER+GRAVE` toggles the scratchpad, and `SUPER+SHIFT+GRAVE` moves the focused window to it.
 - `SUPER+SHIFT+S` is unbound and does not open Google Maps.
+- `SUPER+SHIFT+P` is unbound and does not open Google Photos.
+- `SUPER+SHIFT+M` is unbound and does not open Spotify.
 - The topbar clock shows the day, abbreviated month, year, and time.
 - Fcitx5 Quick Phrase does not use `Super+grave`; `Super+semicolon` remains its trigger.
 - Application HTTP and HTTPS links open in a regular Brave window on the active workspace, or create one there when none exists.
