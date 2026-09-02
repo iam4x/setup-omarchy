@@ -687,7 +687,18 @@ focus.
 After changing the file, run `luac -p ~/.config/hypr/looknfeel.lua`, then run
 `hyprctl reload` and `hyprctl configerrors`. The error list must be empty.
 
-### 10. Final verification
+### 10. Configure the topbar clock
+
+Set the Omarchy topbar clock to show the day, abbreviated month, four-digit
+year, and time:
+
+```bash
+omarchy bar set omarchy.clock format 'd MMM yyyy HH:mm'
+```
+
+The clock should display values such as `12 Sept 2026 11:58`.
+
+### 11. Final verification
 
 Before declaring completion, verify all of the following:
 
@@ -708,6 +719,7 @@ Before declaring completion, verify all of the following:
 - `SUPER+[` goes to the previous browser page, and `SUPER+]` goes to the next browser page. Both do nothing in other applications.
 - `SUPER+GRAVE` toggles the scratchpad, and `SUPER+SHIFT+GRAVE` moves the focused window to it.
 - `SUPER+SHIFT+S` is unbound and does not open Google Maps.
+- The topbar clock shows the day, abbreviated month, year, and time.
 - Fcitx5 Quick Phrase does not use `Super+grave`; `Super+semicolon` remains its trigger.
 - Application HTTP and HTTPS links open in a regular Brave window on the active workspace, or create one there when none exists.
 - Off-site links clicked in any standalone webapp, including mouse-wheel
