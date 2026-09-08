@@ -315,6 +315,9 @@ o.bind("SUPER + W", "Close browser tab / window", close_browser_tab_or_window)
 hl.unbind("SUPER + T")
 o.bind("SUPER + T", "New browser tab", open_browser_tab)
 
+-- Disable Omarchy's workspace layout toggle, including scrolling mode.
+hl.unbind("SUPER + L")
+
 -- Remove Omarchy's preinstalled Google Maps shortcut.
 hl.unbind("SUPER + SHIFT + S")
 
@@ -338,6 +341,8 @@ o.bind("SUPER + SHIFT + GRAVE", "Move window to scratchpad", hl.dsp.window.move(
 In a browser, `SUPER+W` sends `Ctrl+W`, so it closes the active tab. When the browser has no tab left, `Ctrl+W` closes the browser window. In other applications, `SUPER+W` keeps its window-close behavior.
 
 In a browser, `SUPER+T` sends `Ctrl+T` to open a new tab. Outside browsers, `SUPER+T` does nothing and cannot change the tile layout.
+
+`SUPER+L` remains unbound, so it cannot toggle the workspace layout or enter scrolling workspace mode.
 
 In a browser, `SUPER+[` sends `Alt+Left` to go to the previous page. `SUPER+]` sends `Alt+Right` to go to the next page. Outside browsers, both shortcuts do nothing.
 
@@ -722,6 +727,7 @@ Before declaring completion, verify all of the following:
 - In a browser, `SUPER+R` reloads the current page and `SUPER+SHIFT+R` performs a hard reload.
 - `SUPER+W` closes one browser tab at a time and closes the browser window after the last tab. In other applications, it closes the active window.
 - `SUPER+T` opens a new browser tab and does nothing in other applications.
+- `SUPER+L` is unbound and does not toggle the workspace layout or scrolling workspace mode.
 - `SUPER+[` goes to the previous browser page, and `SUPER+]` goes to the next browser page. Both do nothing in other applications.
 - `SUPER+GRAVE` toggles the scratchpad, and `SUPER+SHIFT+GRAVE` moves the focused window to it.
 - `SUPER+SHIFT+S` is unbound and does not open Google Maps.
