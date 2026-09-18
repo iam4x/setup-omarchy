@@ -241,7 +241,7 @@ The command must report `delete-char`.
 
 ### 7. Configure browser and scratchpad shortcuts
 
-Override Omarchy's default `SUPER+W` and `SUPER+T` bindings, then add browser shortcuts in `~/.config/hypr/bindings.lua`:
+Override Omarchy's default `SUPER+W`, `SUPER+T`, and `SUPER+S` bindings, then add the shortcuts in `~/.config/hypr/bindings.lua`:
 
 ```lua
 local function active_window_is_browser()
@@ -315,6 +315,12 @@ o.bind("SUPER + W", "Close browser tab / window", close_browser_tab_or_window)
 hl.unbind("SUPER + T")
 o.bind("SUPER + T", "New browser tab", open_browser_tab)
 
+-- Replace Omarchy's default SUPER+S scratchpad binding with Ctrl+S.
+hl.unbind("SUPER + S")
+o.bind("SUPER + S", "Save", function()
+  send_shortcut_once("CTRL", "S")
+end)
+
 -- Disable Omarchy's workspace layout toggle, including scrolling mode.
 hl.unbind("SUPER + L")
 
@@ -350,7 +356,7 @@ In a browser, `SUPER+R` sends `Ctrl+R` to reload the current page. `SUPER+SHIFT+
 
 `SUPER+GRAVE` toggles the scratchpad. On a US keyboard, `GRAVE` is the key
 labeled `~`; press it without `SHIFT`. `SUPER+SHIFT+GRAVE` moves the focused
-window to the scratchpad. Keep Omarchy's existing `SUPER+S` scratchpad toggle.
+window to the scratchpad. `SUPER+S` sends `Ctrl+S` to the focused application.
 `SUPER+SHIFT+S` must remain unbound and must not open Google Maps.
 `SUPER+SHIFT+P` and `SUPER+SHIFT+M` must remain unbound and must not open
 Google Photos or Spotify.
@@ -724,6 +730,7 @@ Before declaring completion, verify all of the following:
 - SSH password authentication works only through the intended Tailscale path, root SSH login is disabled, and both services start at boot.
 - `SUPER+R` acts like `Ctrl+L` in a newly opened Foot terminal.
 - `Delete` removes the character after the cursor in a new Foot terminal instead of inserting `~`.
+- `SUPER+S` sends `Ctrl+S` to the focused application.
 - In a browser, `SUPER+R` reloads the current page and `SUPER+SHIFT+R` performs a hard reload.
 - `SUPER+W` closes one browser tab at a time and closes the browser window after the last tab. In other applications, it closes the active window.
 - `SUPER+T` opens a new browser tab and does nothing in other applications.
