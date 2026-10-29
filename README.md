@@ -377,19 +377,24 @@ After changing the file, run `hyprctl reload` and `hyprctl configerrors`. The er
 
 ### 8. Route application links to the active workspace
 
-Brave's native-Wayland external-link path can reuse a browser window on another
-workspace without activating the workspace. Omarchy's XDG browser selection is
-correct, but the browser hand-off needs to be workspace-aware.
+Omarchy routes app links through `omarchy-launch-browser`, which starts the
+browser in the background and then focuses the most recently used Brave window
+on any workspace. That races with workspace-aware routing and can pull you to
+another workspace, so links go straight to a user-level launcher instead.
 
-The user-level launcher at `~/.local/bin/brave` handles URL launches as follows:
+The launcher at `~/.local/bin/brave` handles URL launches as follows:
 
-- If a regular Brave window is already on the active workspace, it focuses that
-  exact Hyprland client and lets Brave open the URL there.
-- Otherwise, it records the existing Brave clients, creates a blank browser
-  window through the existing process (or starts one when no process exists),
-  waits for its Hyprland address, moves that address silently to the active
-  workspace, focuses it, and enters the URL directly with `Ctrl+L` and
-  `wtype`.
+- It reads the target workspace from the focused monitor, preferring an open
+  special workspace, so the scratchpad works (`hyprctl activeworkspace` ignores
+  special workspaces).
+- If a regular Brave window is on that workspace, it focuses that exact
+  Hyprland client, waits for the focus to land, and hands the URL to Brave,
+  which opens it as a tab there.
+- Otherwise it opens the URL with `--new-window` and moves the new Hyprland
+  client to the target workspace.
+- The URL is only ever passed as an argument, never typed with `wtype`, so a
+  focus change cannot leak it into another app. Launches are serialized with
+  `flock` so concurrent clicks cannot claim each other's window.
 - Private-window and ordinary non-URL launches keep the normal Brave behavior.
 
 The full launcher is:
@@ -397,205 +402,133 @@ The full launcher is:
 ```bash
 #!/bin/bash
 
+# Workspace-aware Brave launcher for links opened from other apps.
+#
+# - A Brave window on the current workspace (scratchpad included): focus it and
+#   hand the URL to Brave, which opens it as a tab in the last active window.
+# - No Brave window there: open the URL with --new-window, then move that new
+#   window to the current workspace.
+#
+# The URL is always passed to Brave as an argument, never typed with keystrokes,
+# so a focus change can never send it to another app.
+
 set -u
 
 real_browser=/usr/bin/brave
-has_url=false
-requested_url=
+handoff=${OMARCHY_PATH:-/usr/share/omarchy}/bin/omarchy-cmd-browser-handoff
 
+url=
 for argument in "$@"; do
-  case "$argument" in
-    http://* | https://*)
-      has_url=true
-      requested_url=$argument
-      break
-      ;;
+  case $argument in
+    --incognito | --private | --private-window | --inprivate) exec "$real_browser" "$@" ;;
+    http://* | https://*) url=$argument ;;
   esac
 done
 
-# Keep ordinary browser launches and private-window launches unchanged.
-if [[ $has_url != true ]] \
-    || ! command -v hyprctl >/dev/null 2>&1 \
-    || ! command -v jq >/dev/null 2>&1 \
-    || ! command -v wtype >/dev/null 2>&1; then
+if [[ -z $url ]] || ! command -v hyprctl >/dev/null || ! command -v jq >/dev/null; then
   exec "$real_browser" "$@"
 fi
 
-for argument in "$@"; do
-  case "$argument" in
-    --incognito | --private | --private-window | --inprivate)
-      exec "$real_browser" "$@"
-      ;;
-  esac
-done
-
-# Apps launched through uwsm-app can lack HYPRLAND_INSTANCE_SIGNATURE even
-# though they still have a Wayland display. Always pass the instance explicitly
-# so workspace queries and dispatches do not depend on inherited shell state.
-hyprctl_instance_args=()
-if [[ -n ${HYPRLAND_INSTANCE_SIGNATURE:-} ]]; then
-  hyprctl_instance_args=(-i "$HYPRLAND_INSTANCE_SIGNATURE")
-else
-  hyprland_instance=$(
-    hyprctl -j instances 2>/dev/null |
-      jq -r --arg wayland_display "${WAYLAND_DISPLAY:-}" '
-        if $wayland_display != "" then
-          (map(select(.wl_socket == $wayland_display)) | .[0].instance) // empty
-        else
-          (sort_by(.time) | last | .instance) // empty
-        end
-      ' 2>/dev/null
-  )
-
-  # In a UWSM-launched scope, hyprctl may not be able to enumerate instances
-  # without a signature. The runtime directory still contains the live
-  # instance socket, which is sufficient when this user has one Hyprland
-  # session (the normal Omarchy setup).
-  if [[ -z $hyprland_instance ]]; then
-    hypr_runtime_dir="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/hypr"
-    hyprland_instance=$(
-      for instance_dir in "$hypr_runtime_dir"/*; do
-        if [[ -S "$instance_dir/.socket.sock" ]]; then
-          basename "$instance_dir"
-        fi
-      done | head -1
-    )
-  fi
-
-  if [[ -n $hyprland_instance ]]; then
-    hyprctl_instance_args=(-i "$hyprland_instance")
-  fi
-fi
-
-hyprctl_cmd() {
-  hyprctl "${hyprctl_instance_args[@]}" "$@"
-}
-
-current_workspace=$(hyprctl_cmd activeworkspace -j 2>/dev/null | jq -r '.id // empty' 2>/dev/null)
-if [[ ! $current_workspace =~ ^[0-9]+$ ]]; then
-  exec "$real_browser" --new-window "$@"
-fi
-
-browser_address_on_workspace=$(
-  hyprctl_cmd clients -j 2>/dev/null |
-    jq -r --arg workspace "$current_workspace" '
-      .[]
-      | select(.class == "brave-browser")
-      | select((.workspace.id | tostring) == $workspace)
-      | [.focusHistoryID, .address]
-      | @tsv
-    ' 2>/dev/null |
-    sort -n -k1,1 |
-    awk 'NF >= 2 { print $2; exit }'
-)
-
-if [[ -n $browser_address_on_workspace ]]; then
-  hyprctl_cmd dispatch \
-    "hl.dsp.focus({ window = \"address:$browser_address_on_workspace\" })" \
-    >/dev/null 2>&1 || true
-  exec "$real_browser" "$@"
-fi
-
-existing_browser_addresses=$(
-  hyprctl_cmd clients -j 2>/dev/null |
-    jq -c '[.[] | select(.class == "brave-browser") | .address]' 2>/dev/null
-) || existing_browser_addresses='[]'
-
-if [[ -z $existing_browser_addresses || $existing_browser_addresses != \[*\] ]]; then
-  existing_browser_addresses='[]'
-fi
-
-find_new_browser_window() {
-  local existing_addresses=$1
-  local candidate=
-
-  for _ in {1..100}; do
-    candidate=$(
-      hyprctl_cmd clients -j 2>/dev/null |
-        jq -r --argjson existing "$existing_addresses" '
-          [
-            .[]
-            | select(.class == "brave-browser")
-            | . as $client
-            | select(($existing | index($client.address)) == null)
-          ]
-          | sort_by(.focusHistoryID // -1)
-          | last
-          | .address // empty
-        ' 2>/dev/null
-    )
-
-    if [[ -n $candidate ]]; then
-      printf '%s\n' "$candidate"
-      return 0
-    fi
-
-    sleep 0.1
+# Processes started outside the Hyprland session (systemd units, Brave's native
+# host) may not inherit the instance signature.
+if [[ -z ${HYPRLAND_INSTANCE_SIGNATURE:-} ]]; then
+  for socket in "${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"/hypr/*/.socket.sock; do
+    [[ -S $socket ]] || continue
+    HYPRLAND_INSTANCE_SIGNATURE=$(basename "$(dirname "$socket")")
+    export HYPRLAND_INSTANCE_SIGNATURE
+    break
   done
-
-  return 1
-}
-
-load_url_into_window() {
-  local address=$1
-  local focused_address
-
-  hyprctl_cmd dispatch \
-    "hl.dsp.window.move({ workspace = \"$current_workspace\", follow = false, window = \"address:$address\" })" \
-    >/dev/null 2>&1 || return 1
-  hyprctl_cmd dispatch \
-    "hl.dsp.focus({ window = \"address:$address\" })" \
-    >/dev/null 2>&1 || return 1
-
-  focused_address=$(hyprctl_cmd activewindow -j 2>/dev/null | jq -r '.address // empty' 2>/dev/null)
-  [[ $focused_address == "$address" ]] || return 1
-
-  # Brave's native-Wayland external-link path can route the URL to an older
-  # window on another workspace. Navigate the exact new window instead of
-  # handing the URL back to Brave as a second external-link request.
-  hyprctl_cmd dispatch \
-    "hl.dsp.send_shortcut({ mods = \"CTRL\", key = \"L\", window = \"address:$address\" })" \
-    >/dev/null 2>&1 || return 1
-  sleep 0.05
-  wtype -- "$requested_url" >/dev/null 2>&1 || return 1
-  wtype -k Return >/dev/null 2>&1 || return 1
-}
-
-# If another Brave window exists, create a real new window through the most
-# recently used one. This avoids Brave turning --new-window URL requests into
-# background tabs in that remote process.
-global_browser_address=$(
-  hyprctl_cmd clients -j 2>/dev/null |
-    jq -r '
-      .[]
-      | select(.class == "brave-browser")
-      | [.focusHistoryID, .address]
-      | @tsv
-    ' 2>/dev/null |
-    sort -n -k1,1 |
-    awk 'NF >= 2 { print $2; exit }'
-)
-
-new_browser_address=
-if [[ -n $global_browser_address ]]; then
-  hyprctl_cmd dispatch \
-    "hl.dsp.send_shortcut({ mods = \"CTRL\", key = \"N\", window = \"address:$global_browser_address\" })" \
-    >/dev/null 2>&1 || true
-  new_browser_address=$(find_new_browser_window "$existing_browser_addresses") || new_browser_address=
-else
-  # With no existing browser process, start a blank window on the current
-  # workspace and put the URL into it after Hyprland has assigned an address.
-  "$real_browser" --new-window >/dev/null 2>&1 &
-  new_browser_address=$(find_new_browser_window "$existing_browser_addresses") || new_browser_address=
 fi
 
-if [[ -n $new_browser_address ]] && load_url_into_window "$new_browser_address"; then
+dispatch() {
+  hyprctl dispatch "$1" >/dev/null 2>&1
+}
+
+focused_address() {
+  hyprctl activewindow -j 2>/dev/null | jq -r '.address // empty'
+}
+
+browser_windows() {
+  # Regular Brave windows only; webapps have their own brave-<app> class.
+  hyprctl clients -j 2>/dev/null | jq -c '[.[] | select(.class == "brave-browser")]'
+}
+
+# Send the command line to the running Brave over its singleton socket, or
+# start Brave when none is running. The started browser must not inherit the
+# lock below.
+open_in_brave() {
+  "$handoff" "$real_browser" "$@" 2>/dev/null && return
+  "$real_browser" "$@" >/dev/null 2>&1 9>&- &
+}
+
+# One link at a time, so concurrent launches cannot claim each other's window.
+exec 9>"${XDG_RUNTIME_DIR:-/tmp}/brave-workspace-launcher.lock"
+flock -w 10 9
+
+# activeworkspace ignores an open special workspace, so read the focused
+# monitor instead and prefer its special workspace when one is shown.
+target=$(
+  hyprctl monitors -j 2>/dev/null | jq -c '
+    first(.[] | select(.focused))
+    | if (.specialWorkspace.id // 0) != 0 then .specialWorkspace else .activeWorkspace end
+    | { name, selector: (if .id > 0 then (.id | tostring) elif (.name | startswith("special:")) then .name else "name:" + .name end) }
+  '
+)
+target_name=$(jq -r '.name // empty' <<<"$target" 2>/dev/null)
+target_selector=$(jq -r '.selector // empty' <<<"$target" 2>/dev/null)
+
+if [[ -z $target_name ]]; then
+  open_in_brave "$@"
   exit 0
 fi
 
-# Preserve the normal browser behavior if a compositor/window-system detail
-# prevented the exact-window hand-off from completing.
-exec "$real_browser" --new-window "$@"
+windows=$(browser_windows)
+
+existing_address=$(
+  jq -r --arg ws "$target_name" '
+    [.[] | select(.workspace.name == $ws)] | sort_by(.focusHistoryID) | first.address // empty
+  ' <<<"$windows"
+)
+
+if [[ -n $existing_address ]]; then
+  dispatch "hl.dsp.focus({ window = \"address:$existing_address\" })"
+
+  # Brave opens external URLs in the window it last saw activated, so wait
+  # until the compositor has focused ours and give Brave a moment to notice.
+  for _ in {1..20}; do
+    [[ $(focused_address) == "$existing_address" ]] && break
+    sleep 0.025
+  done
+  sleep 0.1
+
+  open_in_brave "$url"
+  exit 0
+fi
+
+had_browser=$(jq 'length > 0' <<<"$windows")
+known_addresses=$(jq -c 'map(.address)' <<<"$windows")
+
+open_in_brave --new-window "$url"
+
+# A cold start opens on the active workspace by itself, and may restore
+# several session windows that should stay where they are.
+[[ $had_browser == true ]] || exit 0
+
+new_address=
+for _ in {1..100}; do
+  new_address=$(
+    browser_windows | jq -r --argjson known "$known_addresses" '
+      [.[] | select(.address as $a | $known | index($a) | not)] | first.address // empty
+    '
+  )
+  [[ -n $new_address ]] && break
+  sleep 0.05
+done
+
+[[ -n $new_address ]] || exit 0
+
+dispatch "hl.dsp.window.move({ workspace = \"$target_selector\", follow = false, window = \"address:$new_address\" })"
+dispatch "hl.dsp.focus({ window = \"address:$new_address\" })"
 ```
 
 Make it executable:
@@ -642,6 +575,16 @@ x-scheme-handler/http=brave-browser.desktop
 x-scheme-handler/https=brave-browser.desktop
 ```
 
+Omarchy also ships `~/.config/hyprland-mimeapps.list`, which is read before
+`mimeapps.list` on Hyprland and points links at `omarchy-browser.desktop`.
+Point it at the launcher instead:
+
+```ini
+[Default Applications]
+x-scheme-handler/http=brave-browser.desktop
+x-scheme-handler/https=brave-browser.desktop
+```
+
 Refresh and verify the desktop integration:
 
 ```bash
@@ -654,7 +597,7 @@ xdg-mime query default x-scheme-handler/https
 The last command must report `brave-browser.desktop`. Test both paths: open a
 link while a regular Brave window is already on the active workspace, then
 open a link from a workspace without a regular Brave window. The launcher
-requires `jq`, `hyprctl`, and `wtype`; Omarchy already provides these on
+requires `jq`, `hyprctl`, `flock`, and `socat`; Omarchy already provides these on
 this setup.
 
 Chromium web apps are a separate path. An app launched with `--app=...`
