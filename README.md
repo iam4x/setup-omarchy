@@ -365,6 +365,18 @@ window to the scratchpad. `SUPER+S` sends `Ctrl+S` to the focused application.
 `SUPER+SHIFT+P` and `SUPER+SHIFT+M` must remain unbound and must not open
 Google Photos or Spotify.
 
+Omarchy's Quake console makes every special workspace slide down from the top.
+To make the scratchpad rise from below and sink back down when it closes,
+append this to `~/.config/hypr/looknfeel.lua`:
+
+```lua
+-- Omarchy's Quake console (default/hypr/qconsole.lua) makes every special
+-- workspace drop from the top. Mirror it so the scratchpad rises from below and
+-- sinks back down. The style names the edge the offset is measured from.
+hl.animation({ leaf = "specialWorkspaceIn", enabled = true, speed = 3, bezier = "easeOutQuint", style = "slide bottom" })
+hl.animation({ leaf = "specialWorkspaceOut", enabled = true, speed = 2, bezier = "easeInOutCubic", style = "slide top" })
+```
+
 Fcitx5 Quick Phrase also uses `Super+grave` by default. To leave that key for
 Hyprland, back up `~/.config/fcitx5/conf/quickphrase.conf` if it exists, then
 create it with this content:
