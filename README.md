@@ -340,6 +340,10 @@ o.bind("SUPER + R", "Reload browser page", reload_browser_page, { non_consuming 
 o.bind("SUPER + SHIFT + R", "Hard reload browser page", hard_reload_browser_page, { non_consuming = true })
 
 -- SUPER+~ uses the direct GRAVE key on the configured US keyboard layout.
+-- Omarchy binds SUPER+GRAVE and SUPER+SHIFT+GRAVE to its Quake console, so
+-- unbind both first or each press toggles the console and the scratchpad.
+hl.unbind("SUPER + GRAVE")
+hl.unbind("SUPER + SHIFT + GRAVE")
 o.bind("SUPER + GRAVE", "Toggle scratchpad", hl.dsp.workspace.toggle_special("scratchpad"))
 o.bind("SUPER + SHIFT + GRAVE", "Move window to scratchpad", hl.dsp.window.move({ workspace = "special:scratchpad", follow = false }))
 ```
